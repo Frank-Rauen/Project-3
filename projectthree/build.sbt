@@ -13,7 +13,13 @@ lazy val root = (project in file("."))
     // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
     libraryDependencies += "org.apache.httpcomponents" % "httpclient" % "4.5.12",
     // https://mvnrepository.com/artifact/commons-io/commons-io
-    libraryDependencies += "commons-io" % "commons-io" % "2.8.0"
+    libraryDependencies += "commons-io" % "commons-io" % "2.8.0",
+    libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "3.0.0",
+    libraryDependencies += "org.apache.hadoop" % "hadoop-client" % "3.0.0",
+    libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0"
   )
 
-// See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for instructions on how to publish to Sonatype.
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
