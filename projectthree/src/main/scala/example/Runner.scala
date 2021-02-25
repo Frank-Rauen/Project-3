@@ -21,7 +21,8 @@ object Runner {
     import spark.implicits._
     spark.sparkContext.setLogLevel("WARN")
 
-    val s3DataMaybe = spark.read.text("s3a://usf-210104-big-data/twitterstream/tweetstream-1613536993819-1")
-    s3DataMaybe.show()
+      val s3DataMaybe = spark.sparkContext.textFile("s3a://commoncrawl/crawl-data/CC-MAIN-2013-48/segments/1386163035819/warc/CC-MAIN-20131204131715-00000-ip-10-33-133-15.ec2.internal.warc.gz")
+      s3DataMaybe.take(2000).foreach(println)
+
   }
 }
