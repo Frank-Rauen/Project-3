@@ -10,8 +10,8 @@ object Runner {
       .master("local[*]")
       .getOrCreate()
 
-    val key = System.getenv("AWS_ACCESS_KEY_ID")
-    val secret = System.getenv("AWS_SECRET_ACCESS_KEY")
+    val key = System.getenv("AWS_KEY_ID")
+    val secret = System.getenv("AWS_SEC")
 
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", key)
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", secret)
