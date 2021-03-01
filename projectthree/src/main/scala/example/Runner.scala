@@ -1,6 +1,21 @@
 package example
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+
+/**
+  * This script reads 500k rows of data that I pulled in from the CC columnar index using EMR
+  * This should be a manageable size to practice running aggregations with the CC index
+  * 
+  * I used the following filters when pulling this data in from EMR:
+  *   val crawl = "CC-MAIN-2020-05"
+  *   val jobUrls = df
+  *    .select("url_host_name", "url_path")
+  *    .filter($"crawl" === crawl)
+  *    .filter($"subset" === "warc" )
+  *    .filter($"url_host_registry_suffix" === "com")
+  *    .filter($"url_path".contains("job"))
+  **/
 
 object Runner {
   def main(args: Array[String]): Unit = {
@@ -19,13 +34,22 @@ object Runner {
     import spark.implicits._
     spark.sparkContext.setLogLevel("WARN")
 
-    val df = spark.read.load("s3a://commoncrawl/cc-index/table/cc-main/warc/")
+    // I'm 98% sure I have this bucket configured so that everyone can access it
+    // If you get a 403 error, let me know. It just means I need to tweak the bucket premissions further
+    val s3bucket = "s3a://emr-output-revusf/joburls_CC-MAIN-2020-05_500k/"
 
-    df
-    .select("url_host_name", "url_path")
-    .filter($"crawl" === "CC-MAIN-2020-16")
-    .filter($"subset" === "warc")
-    .filter($"url_path".contains("job"))
-    .show(200, false)
+    val jobUrls = spark.read
+      .format("csv")
+      .option("header", "false")
+      .load(s3bucket)
+      .toDF("url_host_name", "url_path")
+
+    // This query takes a minute or two to run
+    jobUrls
+      .select("url_host_name")
+      .groupBy("url_host_name")
+      .agg(count("url_host_name"))
+      .sort(desc("count(url_host_name)"))
+      .show(10, false)
   }
 }
