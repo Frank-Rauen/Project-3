@@ -22,7 +22,7 @@ object Runner {
     val spark = SparkSession
       .builder()
       .appName("scalas3read")
-      .master("local[*]")
+      .master("https://s3.console.aws.amazon.com/s3/buckets/project3databucket")
       .getOrCreate()
 
     val key = System.getenv("AWS_KEY_ID")
@@ -30,26 +30,48 @@ object Runner {
 
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", key)
     spark.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", secret)
+    spark.sparkContext.hadoopConfiguration
+    .set("fs.s3a.endpoint", "s3.amazonaws.com")
 
     import spark.implicits._
     spark.sparkContext.setLogLevel("WARN")
 
-    // I'm 98% sure I have this bucket configured so that everyone can access it
-    // If you get a 403 error, let me know. It just means I need to tweak the bucket premissions further
-    val s3bucket = "s3a://emr-output-revusf/joburls_CC-MAIN-2020-05_500k/"
 
-    val jobUrls = spark.read
+    val columnarIndexDF =
+    spark.read
       .format("csv")
-      .option("header", "false")
-      .load(s3bucket)
-      .toDF("url_host_name", "url_path")
+      .option("header", "true")
+      .load("s3://commoncrawl/cc-index/table/cc-main/warc/")
+      
+      
+ 
+  spark.sql(s"""SELECT DISTINCT count(*) AS "Tech Jobs"
+FROM 
+    (SELECT url_path
+    FROM "ccindex"."ccindex"
+    TABLESAMPLE BERNOULLI(10) 
+WHERE crawl LIKE 'CC-MAIN-2019-04'
+AND subset = 'warc'
+AND fetch_status = 200
+AND content_languages = 'eng'
+AND (fetch_time BETWEEN TIMESTAMP '2019-01-01 00:00:00' AND TIMESTAMP '2019-01-31 23:59:59')
+  AND (LOWER(url_path) LIKE '%job%') AND 
+      (LOWER(url_path) LIKE '%frontend%' OR
+      LOWER(url_path) LIKE '%backend%' OR
+      LOWER(url_path) LIKE '%fullstack%' OR
+      LOWER(url_path) LIKE '%cybersecurity%' OR
+      LOWER(url_path) LIKE '%software%' OR
+      LOWER(url_path) LIKE '%computer%' OR
+      LOWER(url_path) LIKE '%python%' OR
+      LOWER(url_path) LIKE '%java%' OR
+      LOWER(url_path) LIKE '%c++%' OR
+      LOWER(url_path) LIKE '%data%scientist%' OR 
+      LOWER(url_path) LIKE '%web%developer%' OR 
+      LOWER(url_path) LIKE '%artificial%intelligence%' OR
+      LOWER(url_path) LIKE '%network%' OR 
+      LOWER(url_path) LIKE '%programmer%'))""").show()
 
-    // This query takes a minute or two to run
-    jobUrls
-      .select("url_host_name")
-      .groupBy("url_host_name")
-      .agg(count("url_host_name"))
-      .sort(desc("count(url_host_name)"))
-      .show(10, false)
-  }
+
+
+}
 }

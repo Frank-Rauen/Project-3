@@ -19,6 +19,8 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.apache.hadoop" % "hadoop-aws" % "3.0.0"
   )
 
+  mainClass in (Compile, packageBin) := Some("example.Runner")
+
 assemblyMergeStrategy in assembly := {
   case PathList("META-INF", xs @ _*) => MergeStrategy.discard
   case x => MergeStrategy.first
